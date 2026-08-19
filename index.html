@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Pertanyaan Spesial</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+            background: linear-gradient(
+                135deg,
+                #ff9a9e 0%,
+                #fecfef 100%
+            );
+
+            min-height: 100vh;
+            margin: 0;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            overflow: hidden;
+        }
+
+        /* =========================
+           CARD
+        ========================= */
+
+        .card {
+            background: white;
+
+            padding: 30px 40px 40px;
+
+            border-radius: 20px;
+
+            box-shadow:
+                0 10px 25px rgba(0, 0, 0, 0.1);
+
+            text-align: center;
+
+            max-width: 450px;
+            width: 90%;
+
+            position: relative;
+
+            z-index: 10;
+        }
+
+
+        /* =========================
+           PERTANYAAN
+        ========================= */
+
+        h2 {
+            color: #ff4b6e;
+
+            margin: 0 0 30px;
+
+            font-size: 24px;
+
+            line-height: 1.4;
+        }
+
+
+        /* =========================
+           CONTAINER TOMBOL
+        ========================= */
+
+        .btn-container {
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            gap: 20px;
+
+            min-height: 50px;
+        }
+
+
+        /* =========================
+           SEMUA TOMBOL
+        ========================= */
+
+        button {
+            padding: 12px 25px;
+
+            font-size: 16px;
+
+            font-weight: bold;
+
+            border: none;
+
+            border-radius: 50px;
+
+            cursor: pointer;
+        }
+
+
+        /* =========================
+           TOMBOL YA
+        ========================= */
+
+        #btnYa,
+        #btnLanjut {
+
+            background-color: #ff4b6e;
+
+            color: white;
+
+            box-shadow:
+                0 4px 15px
+                rgba(255, 75, 110, 0.4);
+
+            transition:
+                transform 0.2s;
+        }
+
+
+        #btnYa:hover,
+        #btnLanjut:hover {
+
+            transform: scale(1.05);
+        }
+
+
+        /* =========================
+           TOMBOL TIDAK
+        ========================= */
+
+        #btnTidak {
+
+            background-color: #e0e0e0;
+
+            color: #333;
+        }
+
+
+        /*
+         * Setelah tombol kabur,
+         * dia bebas bergerak di seluruh layar.
+         */
+
+        #btnTidak.teleport {
+
+            position: fixed;
+
+            z-index: 9999;
+        }
+
+    </style>
+</head>
+
+
+<body>
+
+
+    <!-- =========================
+         CARD UTAMA
+    ========================= -->
+
+    <div class="card" id="card">
+
+        <h2 id="questionText">
+            Kamu mau gak jadi pacar aku?
+        </h2>
+
+
+        <div
+            class="btn-container"
+            id="btnContainer"
+        >
+
+            <button
+                id="btnYa"
+                onclick="pilihYa()"
+            >
+                Ya
+            </button>
+
+
+            <button
+                id="btnTidak"
+            >
+                Tidak
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <script>
+
+        /*
+         * ==============================
+         * VARIABEL
+         * ==============================
+         */
+
+        let step = 1;
+
+        let sudahKabur = false;
+
+
+        /*
+         * Deteksi perangkat touch.
+         *
+         * PC/laptop biasanya:
+         * pointer: fine
+         *
+         * Smartphone:
+         * pointer: coarse
+         */
+
+        const perangkatTouch =
+            window.matchMedia(
+                "(pointer: coarse)"
+            ).matches ||
+            "ontouchstart" in window;
+
+
+        /*
+         * ==============================
+         * FUNGSI TELEPORT
+         * ==============================
+         */
+
+        function pindahTombol() {
+
+            const btnTidak =
+                document.getElementById(
+                    "btnTidak"
+                );
+
+            const card =
+                document.getElementById(
+                    "card"
+                );
+
+
+            if (!btnTidak || !card) {
+                return;
+            }
+
+
+            /*
+             * Pertama kali tombol kabur,
+             * ubah dari posisi normal menjadi
+             * fixed.
+             */
+
+            if (!sudahKabur) {
+
+                sudahKabur = true;
+
+
+                const posisiAwal =
+                    btnTidak.getBoundingClientRect();
+
+
+                btnTidak.classList.add(
+                    "teleport"
+                );
+
+
+                btnTidak.style.left =
+                    posisiAwal.left + "px";
+
+
+                btnTidak.style.top =
+                    posisiAwal.top + "px";
+            }
+
+
+            /*
+             * Ukuran tombol
+             */
+
+            const buttonWidth =
+                btnTidak.offsetWidth;
+
+            const buttonHeight =
+                btnTidak.offsetHeight;
+
+
+            /*
+             * Ukuran layar
+             */
+
+            const screenWidth =
+                window.innerWidth;
+
+            const screenHeight =
+                window.innerHeight;
+
+
+            /*
+             * Jarak aman dari pinggir layar
+             */
+
+            const margin = 20;
+
+
+            /*
+             * Area card putih
+             */
+
+            const cardRect =
+                card.getBoundingClientRect();
+
+
+            let x;
+
+            let y;
+
+            let posisiValid = false;
+
+
+            /*
+             * Coba mencari posisi yang
+             * benar-benar berada di luar card.
+             */
+
+            for (let i = 0; i < 300; i++) {
+
+                x =
+                    margin +
+                    Math.random() *
+                    (
+                        screenWidth -
+                        buttonWidth -
+                        margin * 2
+                    );
+
+
+                y =
+                    margin +
+                    Math.random() *
+                    (
+                        screenHeight -
+                        buttonHeight -
+                        margin * 2
+                    );
+
+
+                /*
+                 * Area tombol yang baru.
+                 */
+
+                const tombolLeft = x;
+
+                const tombolRight =
+                    x + buttonWidth;
+
+                const tombolTop = y;
+
+                const tombolBottom =
+                    y + buttonHeight;
+
+
+                /*
+                 * Jarak tambahan dari card.
+                 */
+
+                const buffer = 60;
+
+
+                /*
+                 * Apakah tombol bertabrakan
+                 * dengan area card?
+                 */
+
+                const bertabrakan =
+
+                    tombolRight >
+                        cardRect.left - buffer
+
+                    &&
+
+                    tombolLeft <
+                        cardRect.right + buffer
+
+                    &&
+
+                    tombolBottom >
+                        cardRect.top - buffer
+
+                    &&
+
+                    tombolTop <
+                        cardRect.bottom + buffer;
+
+
+                /*
+                 * Kalau tidak bertabrakan,
+                 * posisi ini boleh digunakan.
+                 */
+
+                if (!bertabrakan) {
+
+                    posisiValid = true;
+
+                    break;
+                }
+            }
+
+
+            /*
+             * TELEPORT!
+             *
+             * Tidak ada transition.
+             * Jadi langsung berpindah.
+             */
+
+            if (posisiValid) {
+
+                btnTidak.style.left =
+                    x + "px";
+
+                btnTidak.style.top =
+                    y + "px";
+            }
+
+        }
+
+
+        /*
+         * ==============================
+         * MODE PC / MOUSE
+         * ==============================
+         *
+         * Tombol tidak perlu disentuh.
+         *
+         * Begitu kursor mendekati tombol,
+         * tombol langsung kabur.
+         */
+
+        document.addEventListener(
+            "mousemove",
+            function(event) {
+
+                /*
+                 * Jangan gunakan sistem mouse
+                 * pada smartphone.
+                 */
+
+                if (perangkatTouch) {
+                    return;
+                }
+
+
+                const btnTidak =
+                    document.getElementById(
+                        "btnTidak"
+                    );
+
+
+                if (
+                    !btnTidak ||
+                    step === 3
+                ) {
+                    return;
+                }
+
+
+                /*
+                 * Posisi kursor
+                 */
+
+                const mouseX =
+                    event.clientX;
+
+                const mouseY =
+                    event.clientY;
+
+
+                /*
+                 * Posisi tombol
+                 */
+
+                const rect =
+                    btnTidak.getBoundingClientRect();
+
+
+                /*
+                 * Titik tengah tombol
+                 */
+
+                const centerX =
+                    rect.left +
+                    rect.width / 2;
+
+                const centerY =
+                    rect.top +
+                    rect.height / 2;
+
+
+                /*
+                 * Hitung jarak kursor
+                 * ke tombol.
+                 */
+
+                const distance =
+                    Math.sqrt(
+
+                        Math.pow(
+                            mouseX - centerX,
+                            2
+                        )
+
+                        +
+
+                        Math.pow(
+                            mouseY - centerY,
+                            2
+                        )
+                    );
+
+
+                /*
+                 * Radius penghindaran.
+                 *
+                 * 100px berarti tombol akan
+                 * kabur ketika kursor sudah
+                 * mendekat sekitar 100 pixel.
+                 */
+
+                const radius = 100;
+
+
+                if (distance < radius) {
+
+                    pindahTombol();
+                }
+
+            }
+        );
+
+
+        /*
+         * ==============================
+         * MODE SMARTPHONE
+         * ==============================
+         *
+         * Tidak ada hover di smartphone.
+         *
+         * Jadi tombol hanya kabur ketika
+         * benar-benar disentuh.
+         */
+
+        document.addEventListener(
+            "touchstart",
+            function(event) {
+
+                /*
+                 * Hanya untuk smartphone.
+                 */
+
+                if (!perangkatTouch) {
+                    return;
+                }
+
+
+                const btnTidak =
+                    document.getElementById(
+                        "btnTidak"
+                    );
+
+
+                if (!btnTidak) {
+                    return;
+                }
+
+
+                /*
+                 * Cek apakah yang disentuh
+                 * adalah tombol Tidak.
+                 */
+
+                if (
+                    event.target ===
+                    btnTidak
+                ) {
+
+                    event.preventDefault();
+
+                    pindahTombol();
+                }
+
+            },
+            {
+                passive: false
+            }
+        );
+
+
+        /*
+         * ==============================
+         * KLIK TOMBOL TIDAK
+         * ==============================
+         *
+         * Cadangan untuk smartphone.
+         */
+
+        function pasangKlikTidak() {
+
+            const btnTidak =
+                document.getElementById(
+                    "btnTidak"
+                );
+
+
+            if (!btnTidak) {
+                return;
+            }
+
+
+            btnTidak.addEventListener(
+                "click",
+                function(event) {
+
+                    if (perangkatTouch) {
+
+                        event.preventDefault();
+
+                        pindahTombol();
+                    }
+
+                }
+            );
+        }
+
+
+        /*
+         * ==============================
+         * TOMBOL YA
+         * ==============================
+         */
+
+        function pilihYa() {
+
+            const questionText =
+                document.getElementById(
+                    "questionText"
+                );
+
+
+            const btnContainer =
+                document.getElementById(
+                    "btnContainer"
+                );
+
+
+            /*
+             * ==========================
+             * STEP 1
+             * ==========================
+             */
+
+            if (step === 1) {
+
+                step = 2;
+
+
+                questionText.innerHTML =
+                    "Selamat, kamu udah jadi pacar aku! 🥰";
+
+
+                /*
+                 * Ganti tombol Ya
+                 * menjadi Lanjut.
+                 */
+
+                btnContainer.innerHTML = `
+
+                    <button
+                        id="btnLanjut"
+                        onclick="pilihYa()"
+                    >
+                        Lanjut
+                    </button>
+
+                `;
+
+
+                /*
+                 * Pindahkan tombol Tidak
+                 * keluar dari card.
+                 */
+
+                const btnTidak =
+                    document.getElementById(
+                        "btnTidak"
+                    );
+
+
+                if (btnTidak) {
+
+                    document.body.appendChild(
+                        btnTidak
+                    );
+
+
+                    /*
+                     * Langsung teleport
+                     * ke tempat jauh.
+                     */
+
+                    pindahTombol();
+                }
+
+            }
+
+
+            /*
+             * ==========================
+             * STEP 2
+             * ==========================
+             */
+
+            else if (step === 2) {
+
+                step = 3;
+
+
+                questionText.innerHTML =
+                    "Silahkan bayar uang kencan Rp. 500.000 💸";
+
+
+                /*
+                 * HAPUS SEMUA TOMBOL
+                 *
+                 * Tidak ada tombol
+                 * "Ulangi Dari Awal".
+                 */
+
+                btnContainer.innerHTML = "";
+
+
+                /*
+                 * Hapus tombol Tidak.
+                 */
+
+                const btnTidak =
+                    document.getElementById(
+                        "btnTidak"
+                    );
+
+
+                if (btnTidak) {
+
+                    btnTidak.remove();
+                }
+
+            }
+
+        }
+
+
+        /*
+         * ==============================
+         * MULAI
+         * ==============================
+         */
+
+        window.addEventListener(
+            "load",
+            function() {
+
+                pasangKlikTidak();
+
+            }
+        );
+
+
+        /*
+         * Kalau ukuran layar berubah,
+         * teleport ulang agar tidak keluar
+         * dari layar.
+         */
+
+        window.addEventListener(
+            "resize",
+            function() {
+
+                if (sudahKabur) {
+
+                    pindahTombol();
+                }
+
+            }
+        );
+
+    </script>
+
+</body>
+</html>
